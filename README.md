@@ -6,8 +6,33 @@ A shader framework that recreates the look of filming sub-pixel-rendered retro d
 - CMake 3.16 or newer
 - Ninja
 - A C++20-capable compiler
+- Git
+- Python 3, used by the glad generator during CMake configure/build
 
-Make sure `cmake`, `ninja`, and your compiler are available from your terminal's `PATH`.
+Make sure `cmake`, `ninja`, `git`, Python, and your compiler are available from your terminal's `PATH`.
+
+## Vendor Dependencies
+
+Third-party code lives under `vendor` as git submodules:
+
+- GLFW: window and input handling
+- GLM: header-only math library
+- glad: OpenGL loader generation
+
+Add the submodules once from the repository root:
+
+```sh
+git submodule add https://github.com/glfw/glfw.git vendor/glfw
+git submodule add https://github.com/g-truc/glm.git vendor/glm
+git submodule add -b glad2 https://github.com/Dav1dde/glad.git vendor/glad
+git submodule update --init --recursive
+```
+
+After they are added, `build.bat` automatically runs:
+
+```sh
+git submodule update --init --recursive --jobs 3 -- vendor/glfw vendor/glm vendor/glad
+```
 
 ## Building
 
