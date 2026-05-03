@@ -18,21 +18,9 @@ Third-party code lives under `vendor` as git submodules:
 - GLFW: window and input handling
 - GLM: header-only math library
 - glad: OpenGL loader generation
+- ImGui: immediate-mode UI
 
-Add the submodules once from the repository root:
-
-```sh
-git submodule add https://github.com/glfw/glfw.git vendor/glfw
-git submodule add https://github.com/g-truc/glm.git vendor/glm
-git submodule add -b glad2 https://github.com/Dav1dde/glad.git vendor/glad
-git submodule update --init --recursive
-```
-
-After they are added, `build.bat` automatically runs:
-
-```sh
-git submodule update --init --recursive --jobs 3 -- vendor/glfw vendor/glm vendor/glad
-```
+`build.bat` initializes and updates these automatically on first run — no manual step needed after cloning.
 
 ## Building
 

@@ -94,11 +94,12 @@ echo [2/4] Checking vendor dependencies...
 if not exist "%ROOT%\vendor\glfw\CMakeLists.txt" set "VENDOR_WAS_MISSING=1"
 if not exist "%ROOT%\vendor\glm\CMakeLists.txt" set "VENDOR_WAS_MISSING=1"
 if not exist "%ROOT%\vendor\glad\cmake\CMakeLists.txt" set "VENDOR_WAS_MISSING=1"
+if not exist "%ROOT%\vendor\imgui\imgui.h" set "VENDOR_WAS_MISSING=1"
 
 if "%VENDOR_WAS_MISSING%"=="1" (
     if exist "%ROOT%\.gitmodules" (
         echo [status] Vendor files missing. Updating submodules...
-        git -C "%ROOT%" submodule update --init --recursive --jobs 3 -- vendor/glfw vendor/glm vendor/glad
+        git -C "%ROOT%" submodule update --init --recursive --jobs 4 -- vendor/glfw vendor/glm vendor/glad vendor/imgui
         if errorlevel 1 (
             echo [error] Vendor submodule update failed.
             set "EXIT_CODE=1"
@@ -114,6 +115,7 @@ if "%VENDOR_WAS_MISSING%"=="1" (
 call :check_vendor "GLFW" "%ROOT%\vendor\glfw\CMakeLists.txt"
 call :check_vendor "GLM" "%ROOT%\vendor\glm\CMakeLists.txt"
 call :check_vendor "glad" "%ROOT%\vendor\glad\cmake\CMakeLists.txt"
+call :check_vendor "ImGui" "%ROOT%\vendor\imgui\imgui.h"
 
 if "%MISSING_VENDOR%"=="1" (
     echo.
@@ -124,6 +126,7 @@ if "%MISSING_VENDOR%"=="1" (
     echo [error]   git submodule add https://github.com/glfw/glfw.git vendor/glfw
     echo [error]   git submodule add https://github.com/g-truc/glm.git vendor/glm
     echo [error]   git submodule add -b glad2 https://github.com/Dav1dde/glad.git vendor/glad
+    echo [error]   git submodule add https://github.com/ocornut/imgui.git vendor/imgui
     set "EXIT_CODE=1"
     goto done
 )
