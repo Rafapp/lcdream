@@ -1,6 +1,7 @@
-#include <iostream>
+#include "app.h"
 
 int main(){
-    std::cout << "Hello, LCDream!" << std::endl;
+    App app;
+    app.run();
     return 0;
 }

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compileCommands": "${workspaceFolder}/build/Release/compile_commands.json",
+            "forcedInclude": [
+                "${workspaceFolder}/lcdream/include/pch.h"
+            ]
+        }
+    ],
+    "version": 4
+}

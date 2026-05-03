@@ -67,3 +67,18 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Visual Studio / MSVC
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# VS Code user-specific (project settings like c_cpp_properties.json are committed)
+.vscode/*.code-workspace
+.vscode/settings.json
+
+# OS
+Thumbs.db
+.DS_Store

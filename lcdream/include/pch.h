@@ -1,3 +1,8 @@
+// Windows (must come before GLFW)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
 // STL
 #include <iostream>
 #include <string>

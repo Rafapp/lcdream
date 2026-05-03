@@ -9,6 +9,7 @@ set "BUILD_TYPE="
 set "FORCE_CONFIGURE=0"
 set "VENDOR_WAS_MISSING=0"
 set "MISSING_VENDOR=0"
+set "RUN_AFTER_BUILD=0"
 
 echo ====================
 echo Building LCDream ... 
@@ -44,6 +45,12 @@ if /I "%~1"=="--release" (
 
 if /I "%~1"=="--reconfigure" (
     set "FORCE_CONFIGURE=1"
+    shift
+    goto parse_args
+)
+
+if /I "%~1"=="--run" (
+    set "RUN_AFTER_BUILD=1"
     shift
     goto parse_args
 )
@@ -168,6 +175,12 @@ if errorlevel 1 (
 echo.
 echo [status] Build complete.
 echo [status] Output: %BUILD_DIR%\lcdream.exe
+
+if "%RUN_AFTER_BUILD%"=="1" (
+    echo.
+    echo [status] Running...
+    "%BUILD_DIR%\lcdream.exe"
+)
 goto done
 
 :help
@@ -176,10 +189,13 @@ echo   build.bat --debug
 echo   build.bat --release
 echo   build.bat --debug --reconfigure
 echo   build.bat --release --reconfigure
+echo   build.bat --debug --run
+echo   build.bat --release --run
 echo   build.bat --help
 echo.
 echo No flag defaults to --release.
 echo Use --reconfigure to regenerate CMake files before building.
+echo Use --run to launch the executable after a successful build.
 goto done
 
 :help_error
@@ -188,6 +204,8 @@ echo   build.bat --debug
 echo   build.bat --release
 echo   build.bat --debug --reconfigure
 echo   build.bat --release --reconfigure
+echo   build.bat --debug --run
+echo   build.bat --release --run
 echo   build.bat --help
 echo.
 set "EXIT_CODE=1"
