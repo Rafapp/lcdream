@@ -69,6 +69,10 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
 
 add_executable(lcdream ${SOURCES} ${HEADERS})
 
+target_precompile_headers(lcdream PRIVATE
+    "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/lcdream/include/pch.h>"
+)
+
 target_include_directories(lcdream PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/lcdream/include"
 )
