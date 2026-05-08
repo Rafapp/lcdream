@@ -8,8 +8,16 @@ A shader framework that recreates the look of filming sub-pixel-rendered retro d
 - A C++20-capable compiler
 - Git
 - Python 3, used by the glad generator during CMake configure/build
+- Python module `jinja2`, required by glad code generation
+
+`build.ninja` is generated automatically by CMake when configuring with the Ninja generator.
 
 Make sure `cmake`, `ninja`, `git`, Python, and your compiler are available from your terminal's `PATH`.
+If `jinja2` is missing, install it with:
+
+```sh
+python -m pip install jinja2
+```
 
 ## Vendor Dependencies
 

@@ -10,6 +10,8 @@ set "FORCE_CONFIGURE=0"
 set "VENDOR_WAS_MISSING=0"
 set "MISSING_VENDOR=0"
 set "RUN_AFTER_BUILD=0"
+set "HAS_COMPILER=0"
+set "PYTHON_CMD="
 
 echo ====================
 echo Building LCDream ... 
@@ -67,6 +69,7 @@ if "%BUILD_TYPE%"=="" (
 
 set "BUILD_DIR=%ROOT%\build\%BUILD_TYPE%"
 set "CACHE_FILE=%BUILD_DIR%\CMakeCache.txt"
+set "NINJA_FILE=%BUILD_DIR%\build.ninja"
 
 echo [status] Build type: %BUILD_TYPE%
 echo [status] Build folder: %BUILD_DIR%
@@ -84,6 +87,43 @@ if errorlevel 1 (
 where ninja >nul 2>nul
 if errorlevel 1 (
     echo [error] Ninja was not found in PATH.
+    set "EXIT_CODE=1"
+    goto done
+)
+
+where cl >nul 2>nul
+if not errorlevel 1 set "HAS_COMPILER=1"
+if "%HAS_COMPILER%"=="0" (
+    where g++ >nul 2>nul
+    if not errorlevel 1 set "HAS_COMPILER=1"
+)
+if "%HAS_COMPILER%"=="0" (
+    where clang++ >nul 2>nul
+    if not errorlevel 1 set "HAS_COMPILER=1"
+)
+if "%HAS_COMPILER%"=="0" (
+    echo [error] No C++ compiler found in PATH.
+    echo [error] Install Visual Studio Build Tools or MinGW/MSYS2 and make sure cl, g++, or clang++ is available.
+    set "EXIT_CODE=1"
+    goto done
+)
+
+where py >nul 2>nul
+if not errorlevel 1 set "PYTHON_CMD=py -3"
+if "%PYTHON_CMD%"=="" (
+    where python >nul 2>nul
+    if not errorlevel 1 set "PYTHON_CMD=python"
+)
+if "%PYTHON_CMD%"=="" (
+    echo [error] Python 3 was not found in PATH.
+    set "EXIT_CODE=1"
+    goto done
+)
+
+%PYTHON_CMD% -c "import jinja2" >nul 2>nul
+if errorlevel 1 (
+    echo [error] Python module jinja2 is missing.
+    echo [error] Install it with: %PYTHON_CMD% -m pip install jinja2
     set "EXIT_CODE=1"
     goto done
 )
@@ -151,7 +191,7 @@ if "%FORCE_CONFIGURE%"=="1" (
         set "EXIT_CODE=1"
         goto done
     )
-) else if exist "%CACHE_FILE%" (
+) else if exist "%CACHE_FILE%" if exist "%NINJA_FILE%" (
     echo [3/4] Configure cache found. Skipping configure.
 ) else (
     echo [3/4] Configuring...
@@ -161,6 +201,12 @@ if "%FORCE_CONFIGURE%"=="1" (
         set "EXIT_CODE=1"
         goto done
     )
+)
+
+if not exist "%NINJA_FILE%" (
+    echo [error] build.ninja was not generated at %NINJA_FILE%.
+    set "EXIT_CODE=1"
+    goto done
 )
 
 echo.

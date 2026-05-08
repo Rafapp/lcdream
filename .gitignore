@@ -78,6 +78,7 @@ Testing/
 # VS Code user-specific (project settings like c_cpp_properties.json are committed)
 .vscode/*.code-workspace
 .vscode/settings.json
+.vscode/
 
 # OS
 Thumbs.db
