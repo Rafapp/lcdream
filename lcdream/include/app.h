@@ -1,5 +1,5 @@
 #pragma once
-#include "window.h"
+#include "shader.h"
 
 class App {
 public:
@@ -8,4 +8,5 @@ public:
 
 private:
     Window m_window;
+    Shader* m_shader = nullptr;
 };

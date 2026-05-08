@@ -1,4 +1,7 @@
-#pragma once
+#include <windows.h>
+#include <vector>
+
+std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height);
 
 class Window {
 public:
@@ -15,10 +18,14 @@ public:
 
     int width() const;
     int height() const;
+    int x() const;
+    int y() const;
     bool isFullscreen() const { return m_fullscreen; }
 
     // Pass true to let clicks fall through to apps beneath; false to capture them (ImGui).
     void setClickThrough(bool enabled);
+
+    HWND m_hwnd;
 
 private:
     GLFWwindow* m_window = nullptr;

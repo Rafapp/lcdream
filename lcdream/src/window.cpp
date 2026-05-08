@@ -33,10 +33,13 @@ Window::Window(int width, int height) : m_savedWidth(width), m_savedHeight(heigh
     glfwGetFramebufferSize(m_window, &fbW, &fbH);
     glViewport(0, 0, fbW, fbH);
 
-    HWND hwnd = glfwGetWin32Window(m_window);
-    SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-    SetProp(hwnd, "WinPtr", (HANDLE)this);
-    m_origWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)wndProc);
+    m_hwnd = glfwGetWin32Window(m_window);
+    SetWindowLongPtr(m_hwnd, GWL_EXSTYLE,
+    GetWindowLongPtr(m_hwnd, GWL_EXSTYLE) |
+    WS_EX_LAYERED | WS_EX_TRANSPARENT);
+    SetLayeredWindowAttributes(m_hwnd, 0, 255, LWA_ALPHA);
+    SetProp(m_hwnd, "WinPtr", (HANDLE)this);
+    m_origWndProc = (WNDPROC)SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)wndProc);
 }
 
 Window::~Window() {
@@ -117,4 +120,44 @@ void Window::keyCallback(GLFWwindow* w, int key, int scancode, int action, int m
 
 void Window::framebufferSizeCallback(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+int Window::x() const{
+    int x, y;
+    glfwGetWindowPos(m_window, &x, &y);
+    return x;
+}
+
+int Window::y() const{
+    int x, y;
+    glfwGetWindowPos(m_window, &x, &y);
+    return y;
+}
+
+std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height){
+    HDC hScreen = GetDC(NULL);
+    HDC hDC = CreateCompatibleDC(hScreen);
+
+    HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, width, height);
+    SelectObject(hDC, hBitmap);
+
+    BitBlt(hDC, 0, 0, width, height, hScreen, x, y, SRCCOPY | CAPTUREBLT);
+
+    BITMAPINFOHEADER bi = {};
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = width;
+    bi.biHeight = -height;
+    bi.biPlanes = 1;
+    bi.biBitCount = 24;
+    bi.biCompression = BI_RGB;
+
+    std::vector<unsigned char> pixels(width * height * 3);
+
+    GetDIBits(hDC, hBitmap, 0, height, pixels.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+    DeleteObject(hBitmap);
+    DeleteDC(hDC);
+    ReleaseDC(NULL, hScreen);
+
+    return pixels;
 }

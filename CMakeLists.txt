@@ -86,3 +86,20 @@ target_link_libraries(lcdream PRIVATE
     ${LCDREAM_GLAD_TARGET}
     imgui
 )
+
+set(SHADER_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lcdream/shaders")
+set(SHADER_DST_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+
+file(GLOB SHADERS CONFIGURE_DEPENDS
+    "${SHADER_SRC_DIR}/*.vert"
+    "${SHADER_SRC_DIR}/*.frag"
+)
+
+add_custom_target(copy_shaders ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${SHADER_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${SHADERS}
+            "${SHADER_DST_DIR}"
+)
+
+add_dependencies(lcdream copy_shaders)
