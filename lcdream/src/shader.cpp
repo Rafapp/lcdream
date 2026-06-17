@@ -4,24 +4,28 @@
 
 #include "shader.h"
 
-Shader::Shader(){
-    glGenFramebuffers(1, &m_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+Shader::Shader() : m_texWidth(1920), m_texHeight(1080) {
+    // glGenFramebuffers(1, &m_fbo);
+    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
     glGenTextures(1, &m_tex);
     glBindTexture(GL_TEXTURE_2D, m_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_tex, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_tex, 0);
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-        std::cout << "FBO not complete\n";
-    }
+    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+    //     std::cout << "FBO not complete\n";
+    // }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Shader::Init(){
@@ -123,38 +127,44 @@ void Shader::SetInt(const std::string& name, int value) const {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::Draw(const Window& window) const{
+void Shader::Draw(const Window& window) {
     glUseProgram(ID);
 
     // --- capture region ---
-    int x = window.x();
-    int y = window.y();
     int w = window.width();
     int h = window.height();
 
     HWND hwnd = window.m_hwnd;
 
-    ShowWindow(hwnd, SW_HIDE);
+    // ShowWindow(hwnd, SW_HIDE);
 
     auto pixels = CaptureRegion(window.x(), window.y(), w, h);
 
-    ShowWindow(hwnd, SW_SHOW);
+    // ShowWindow(hwnd, SW_SHOW);
 
     // --- upload ---
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_tex);
 
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGB,
-        w,
-        h,
-        0,
-        GL_BGR,
-        GL_UNSIGNED_BYTE,
-        pixels.data()
-    );
+    // DYNAMIC RESIZE CHECK: If the window stretches past our texture, allocate more room safely
+    if (w > m_texWidth || h > m_texHeight) {
+        m_texWidth = w;
+        m_texHeight = h;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_texWidth, m_texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    }
+
+    // glTexImage2D(
+    //     GL_TEXTURE_2D,
+    //     0,
+    //     GL_RGB,
+    //     w,
+    //     h,
+    //     0,
+    //     GL_BGR,
+    //     GL_UNSIGNED_BYTE,
+    //     pixels.data()
+    // );
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, pixels.data());
 
     // --- uniforms ---
     glUniform1i(glGetUniformLocation(ID, "screenTexture"), 0);

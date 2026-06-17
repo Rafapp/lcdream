@@ -1,5 +1,9 @@
 #include <windows.h>
 #include <vector>
+#include <glm/glm.hpp> // Required for glm::dvec2
+
+// Forward declaration so you don't have to pollute the header with GLFW includes
+struct GLFWwindow;
 
 std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height);
 
@@ -25,12 +29,12 @@ public:
     // Pass true to let clicks fall through to apps beneath; false to capture them (ImGui).
     void setClickThrough(bool enabled);
 
-    HWND m_hwnd;
+    HWND m_hwnd = nullptr;
 
 private:
     GLFWwindow* m_window = nullptr;
     int m_savedX = 0, m_savedY = 0;
-    int m_savedWidth, m_savedHeight;
+    int m_savedWidth = 0, m_savedHeight = 0;
     bool m_fullscreen = false;
     bool m_clickThrough = true;
     WNDPROC m_origWndProc = nullptr;

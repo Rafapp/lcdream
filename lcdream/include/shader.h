@@ -1,3 +1,4 @@
+#include <string>   // Fix: required for std::string parameters
 #include <window.h>
 
 class Shader {
@@ -12,7 +13,8 @@ public:
     void SetInt(const std::string& name, int value) const;
 
     void Init();
-    void Draw(const Window& window) const;
+    // void Draw(const Window& window) const;
+    void Draw(const Window& window);
 
     unsigned int m_tex;
 
@@ -25,4 +27,7 @@ private:
 
     unsigned int m_quadVAO = 0;
     unsigned int m_quadVBO = 0;
+
+    int m_texWidth;
+    int m_texHeight;
 };

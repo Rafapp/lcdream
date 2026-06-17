@@ -34,10 +34,19 @@ Window::Window(int width, int height) : m_savedWidth(width), m_savedHeight(heigh
     glViewport(0, 0, fbW, fbH);
 
     m_hwnd = glfwGetWin32Window(m_window);
-    SetWindowLongPtr(m_hwnd, GWL_EXSTYLE,
-    GetWindowLongPtr(m_hwnd, GWL_EXSTYLE) |
-    WS_EX_LAYERED | WS_EX_TRANSPARENT);
+
+    // BLOCK VIDEO FEEDBACK LOOP
+    // Tells Windows to hide this window completely from screen captures (like BitBlt)
+    #ifndef WDA_EXCLUDEFROMCAPTURE
+    #define WDA_EXCLUDEFROMCAPTURE 0x00000011
+    #endif
+    SetWindowDisplayAffinity(m_hwnd, WDA_EXCLUDEFROMCAPTURE); 
+
+    LONG_PTR exStyle = GetWindowLongPtr(m_hwnd, GWL_EXSTYLE);
+    // SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+    SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED);
     SetLayeredWindowAttributes(m_hwnd, 0, 255, LWA_ALPHA);
+
     SetProp(m_hwnd, "WinPtr", (HANDLE)this);
     m_origWndProc = (WNDPROC)SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)wndProc);
 }
@@ -84,7 +93,20 @@ int Window::height() const {
 
 void Window::setClickThrough(bool enabled) {
     m_clickThrough = enabled;
+    
+    LONG_PTR exStyle = GetWindowLongPtr(m_hwnd, GWL_EXSTYLE);
+    if (enabled) {
+        // Add transparent flag (clicks pass through completely)
+        SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT);
+    } else {
+        // Remove transparent flag (window blocks mouse and can be dragged)
+        SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_TRANSPARENT);
+    }
+    
+    // Force Windows to update the frame style immediately
+    SetWindowPos(m_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
+
 
 void Window::toggleFullscreen() {
     if (m_fullscreen) {
@@ -139,9 +161,10 @@ std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height){
     HDC hDC = CreateCompatibleDC(hScreen);
 
     HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, width, height);
-    SelectObject(hDC, hBitmap);
+    HGDIOBJ hOldBitmap = SelectObject(hDC, hBitmap);
 
-    BitBlt(hDC, 0, 0, width, height, hScreen, x, y, SRCCOPY | CAPTUREBLT);
+    // BitBlt(hDC, 0, 0, width, height, hScreen, x, y, SRCCOPY | CAPTUREBLT);
+    BitBlt(hDC, 0, 0, width, height, hScreen, x, y, SRCCOPY);
 
     BITMAPINFOHEADER bi = {};
     bi.biSize = sizeof(BITMAPINFOHEADER);
@@ -155,6 +178,7 @@ std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height){
 
     GetDIBits(hDC, hBitmap, 0, height, pixels.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
+    SelectObject(hDC, hOldBitmap);
     DeleteObject(hBitmap);
     DeleteDC(hDC);
     ReleaseDC(NULL, hScreen);
