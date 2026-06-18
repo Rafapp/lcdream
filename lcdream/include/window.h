@@ -30,6 +30,7 @@ public:
     void setClickThrough(bool enabled);
 
     HWND m_hwnd = nullptr;
+    bool wasResized();
 
 private:
     GLFWwindow* m_window = nullptr;
@@ -44,4 +45,6 @@ private:
     static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
     static void keyCallback(GLFWwindow* w, int key, int scancode, int action, int mods);
     static void framebufferSizeCallback(GLFWwindow* w, int width, int height);
+
+    bool m_resized = false;
 };

@@ -18,6 +18,9 @@ App::App() : m_window(1920, 1080) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Pre-allocate a 1920x1080 buffer once to avoid runtime reallocations
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr);
 }
 
 App::~App() {
@@ -29,47 +32,58 @@ void App::run(){
     bool isClickThroughActive = false;
     m_window.setClickThrough(isClickThroughActive);
 
+    // Initial allocation state parameters
+    int currentTexW = m_window.width();
+    int currentTexH = m_window.height();
+
     while (!m_window.shouldClose()){
         m_window.pollEvents();
 
-        // Toggle click-through when pressing the Tab key
-        // Pressing Tab will instantly let you drag it or make your mouse pass through it
         if (m_window.isKeyDown(GLFW_KEY_TAB)) {
             isClickThroughActive = !isClickThroughActive;
             m_window.setClickThrough(isClickThroughActive);
-            
-            // Short sleep/delay or wait loop to prevent accidental double-toggles
-            while(m_window.isKeyDown(GLFW_KEY_TAB)) { 
-                m_window.pollEvents(); 
-            }
+            while(m_window.isKeyDown(GLFW_KEY_TAB)) { m_window.pollEvents(); }
         }
-        
-        // Clear with 0 alpha so the window remains transparent to the desktop
+
+        // CLEAN RESIZE CORRECTION:
+        // Execute only when GLFW signals an active resizing update event
+        if (m_window.wasResized()) {
+            currentTexW = m_window.width();
+            currentTexH = m_window.height();
+
+            // Resize the mutable texture base storage to the new canvas size
+            glBindTexture(GL_TEXTURE_2D, m_screenTexId);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, currentTexW, currentTexH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        }
+
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Capture exact screen space occupied by the window
         int winX = m_window.x();
         int winY = m_window.y();
-        int winW = m_window.width();
-        int winH = m_window.height();
 
-        std::vector<unsigned char> screenPixels = CaptureRegion(winX, winY, winW, winH);
+        // Capture exactly matches the updated texture dimensions
+        std::vector<unsigned char> screenPixels = CaptureRegion(winX, winY, currentTexW, currentTexH);
 
-        // Bind texture and upload the newly captured pixels to the GPU
-        // Note: Windows BitBlt uses BGR format, so we use GL_BGR
         glBindTexture(GL_TEXTURE_2D, m_screenTexId);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Prevent alignment artifacts with odd widths
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, winW, winH, 0, GL_BGR, GL_UNSIGNED_BYTE, screenPixels.data());
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        // Bind the texture to slot 0 before drawing so fragment shader can read it
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_screenTexId);
+        // Safely scale mutable GPU storage when window boundaries change
+        // if (winW != texW || winH != texH) {
+        //     texW = winW;
+        //     texH = winH;
+        //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        // }
 
-        // Draw shader passes
-        m_shader->Draw(m_window);
+        // Fast path data stream copy
+        // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, winW, winH, GL_BGR, GL_UNSIGNED_BYTE, screenPixels.data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, currentTexW, currentTexH, GL_BGR, GL_UNSIGNED_BYTE, screenPixels.data());
 
+        // Draw with the freshly updated texture
+        m_shader->Draw(m_window, m_screenTexId);
+        
         m_window.swapBuffers();
     }
 }
+
 

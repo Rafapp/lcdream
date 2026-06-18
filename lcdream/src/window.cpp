@@ -140,8 +140,21 @@ void Window::keyCallback(GLFWwindow* w, int key, int scancode, int action, int m
     }
 }
 
-void Window::framebufferSizeCallback(GLFWwindow*, int width, int height) {
+void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+
+    // Retrieve our Window instance and mark it as resized
+    auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+    if (self) {
+        self->m_resized = true;
+    }
+}
+
+// Read-and-reset function
+bool Window::wasResized() {
+    bool current = m_resized;
+    m_resized = false; // Automatically resets to false once read by App
+    return current;
 }
 
 int Window::x() const{

@@ -1,4 +1,4 @@
-#include <string>   // Fix: required for std::string parameters
+#include <string>  
 #include <window.h>
 
 class Shader {
@@ -14,9 +14,9 @@ public:
 
     void Init();
     // void Draw(const Window& window) const;
-    void Draw(const Window& window);
+    void Draw(const Window& window, unsigned int textureId);
 
-    unsigned int m_tex;
+    // unsigned int m_tex;
 
 private:
     unsigned int ID = 0;
@@ -28,6 +28,6 @@ private:
     unsigned int m_quadVAO = 0;
     unsigned int m_quadVBO = 0;
 
-    int m_texWidth;
-    int m_texHeight;
+    // int m_texWidth;
+    // int m_texHeight;
 };

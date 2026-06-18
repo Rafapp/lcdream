@@ -1,35 +1,17 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <iostream>
 
 #include "shader.h"
 
-Shader::Shader() : m_texWidth(1280), m_texHeight(720) {
-    // glGenFramebuffers(1, &m_fbo);
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-    glGenTextures(1, &m_tex);
-    glBindTexture(GL_TEXTURE_2D, m_tex);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_tex, 0);
-
-    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-    //     std::cout << "FBO not complete\n";
-    // }
-
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+// FIX: Initialize the constructor cleanly without the old texture dimensions
+Shader::Shader() {
+    // Left completely blank because App now manages the texture storage!
 }
 
 void Shader::Init(){
-    if (m_quadVAO!= 0) return;
+    if (m_quadVAO != 0) return;
 
     float quadVertices[] = {
         // positions   // uvs
@@ -65,11 +47,7 @@ std::string Shader::ReadFile(const std::string& path) {
 
     if (!file) {
         std::cerr << "Failed to open shader file: " << path << "\n";
-
-        // Print current working directory
-        std::cerr << "Current working directory: "
-                  << std::filesystem::current_path() << "\n";
-
+        std::cerr << "Current working directory: " << std::filesystem::current_path() << "\n";
         return "";
     }
 
@@ -92,19 +70,16 @@ void Shader::Compile(const std::string& vertPath, const std::string& fragPath)
     const char* vSrc = vertCode.c_str();
     const char* fSrc = fragCode.c_str();
 
-    // Vertex shader
     unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vSrc, nullptr);
     glCompileShader(vs);
     CheckCompileErrors(vs, "VERTEX");
 
-    // Fragment shader
     unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fs, 1, &fSrc, nullptr);
     glCompileShader(fs);
     CheckCompileErrors(fs, "FRAGMENT");
 
-    // Program
     ID = glCreateProgram();
     glAttachShader(ID, vs);
     glAttachShader(ID, fs);
@@ -127,44 +102,13 @@ void Shader::SetInt(const std::string& name, int value) const {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::Draw(const Window& window) {
+// FIX: Perfectly matches your shader.h signature and avoids dynamic texture resizing overhead
+void Shader::Draw(const Window& window, unsigned int textureId) {
     glUseProgram(ID);
 
-    // --- capture region ---
-    int w = window.width();
-    int h = window.height();
-
-    HWND hwnd = window.m_hwnd;
-
-    // ShowWindow(hwnd, SW_HIDE);
-
-    auto pixels = CaptureRegion(window.x(), window.y(), w, h);
-
-    // ShowWindow(hwnd, SW_SHOW);
-
-    // --- upload ---
+    // Bind the texture that was already captured and uploaded in App::run
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_tex);
-
-    // DYNAMIC RESIZE CHECK: If dimensions change at all, safely reallocate GPU memory storage to avoid shearing
-    if (w != m_texWidth || h != m_texHeight) {
-        m_texWidth = w;
-        m_texHeight = h;
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_texWidth, m_texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    }
-
-    // glTexImage2D(
-    //     GL_TEXTURE_2D,
-    //     0,
-    //     GL_RGB,
-    //     w,
-    //     h,
-    //     0,
-    //     GL_BGR,
-    //     GL_UNSIGNED_BYTE,
-    //     pixels.data()
-    // );
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, pixels.data());
+    glBindTexture(GL_TEXTURE_2D, textureId);
 
     // --- uniforms ---
     glUniform1i(glGetUniformLocation(ID, "screenTexture"), 0);
