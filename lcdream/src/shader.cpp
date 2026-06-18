@@ -146,8 +146,8 @@ void Shader::Draw(const Window& window) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_tex);
 
-    // DYNAMIC RESIZE CHECK: If the window stretches past our texture, allocate more room safely
-    if (w > m_texWidth || h > m_texHeight) {
+    // DYNAMIC RESIZE CHECK: If dimensions change at all, safely reallocate GPU memory storage to avoid shearing
+    if (w != m_texWidth || h != m_texHeight) {
         m_texWidth = w;
         m_texHeight = h;
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_texWidth, m_texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);

@@ -4,7 +4,7 @@
 // Declare the external capture function from your window file
 std::vector<unsigned char> CaptureRegion(int x, int y, int width, int height);
 
-App::App() : m_window(1280, 720) {
+App::App() : m_window(1920, 1080) {
     m_shader = new Shader();
     m_shader->Compile("./shaders/lcdream.vert", "./shaders/lcdream.frag");
     m_shader->Init();
